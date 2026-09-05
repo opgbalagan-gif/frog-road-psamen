@@ -30,7 +30,7 @@ jobs:
         run: |
           docker build -t frog-road ./container
           docker run -d --name frog-road -p 127.0.0.1:8080:8080 frog-road
-          curl --retry 5 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:8080/health
+          curl --retry 5 --retry-all-errors --retry-delay 1 --fail http://127.0.0.1:8080/health
       - name: Verify HTTP delivery, compression, and cache headers
         run: python3 container/test_http.py
       - name: Show server logs
