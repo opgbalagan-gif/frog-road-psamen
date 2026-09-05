@@ -1,0 +1,43 @@
+name: Build compact Godot web engine
+on:
+  push:
+    paths: ['.github/workflows/build-compact-engine.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  engine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: godotengine/godot
+          ref: 4.6.2-stable
+          path: engine
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools
+        run: |
+          python -m pip install scons==4.8.1
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+          ./emsdk/emsdk install 4.0.11
+          ./emsdk/emsdk activate 4.0.11
+      - name: Build the 2D release template
+        working-directory: engine
+        run: |
+          source ../emsdk/emsdk_env.sh
+          scons -j2 platform=web target=template_release threads=no \
+            optimize=size lto=thin debug_symbols=no disable_3d=yes \
+            modules_enabled_by_default=no module_gdscript_enabled=yes \
+            module_freetype_enabled=yes module_text_server_fb_enabled=yes \
+            module_jpg_enabled=yes module_webp_enabled=yes \
+            module_ogg_enabled=yes module_vorbis_enabled=yes \
+            module_godot_physics_2d_enabled=yes
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frog-road-compact-web-template
+          path: engine/bin/*.zip
+          if-no-files-found: error
+          retention-days: 7
