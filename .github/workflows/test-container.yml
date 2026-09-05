@@ -1,0 +1,38 @@
+name: Verify game container
+on:
+  push:
+    paths: ['build.json', 'container/**', '.github/workflows/test-container.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare the minimal build context
+        run: |
+          python3 - <<'PY'
+          import pathlib, json, re, shutil
+          root=pathlib.Path('.')
+          target=root/'container/public'; target.mkdir(exist_ok=True)
+          build=json.loads((root/'build.json').read_text())
+          html=(root/'index.html').read_text()
+          names=['index.html','loading.png','index.icon.png','build.json','GODOT_LICENSE.txt','GODOT_COPYRIGHT.txt']
+          names+=re.findall(r'<script src="([^"]+)"',html)
+          names += [a['gzip'] for a in build['delivery']['assets']]
+          engine=build['delivery']['assets'][0]['file'].removesuffix('.wasm')
+          names += [engine+'.audio.worklet.js',engine+'.audio.position.worklet.js']
+          for name in names: shutil.copyfile(root/name,target/name)
+          PY
+      - name: Build and run nginx
+        run: |
+          docker build -t frog-road ./container
+          docker run -d --name frog-road -p 127.0.0.1:8080:8080 frog-road
+          curl --retry 5 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:8080/health
+      - name: Verify HTTP delivery, compression, and cache headers
+        run: python3 container/test_http.py
+      - name: Show server logs
+        if: always()
+        run: docker logs frog-road || true

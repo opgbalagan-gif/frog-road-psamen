@@ -3,7 +3,7 @@
   "edition": "PREACHER SAY AMEN",
   "engine": "Godot 4.6.2",
   "threads": false,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "controls": "tap-forward, swipe-direction",
   "display": "responsive-fullscreen",
   "death_banner": [
@@ -24,5 +24,29 @@
     "pursuers": 3,
     "seconds": 7,
     "tips": "https://tips.yandex.ru/guest/payment/9067670"
+  },
+  "delivery": {
+    "compression": "gzip",
+    "persistent_cache": true,
+    "sha256_verified": true,
+    "assets": [
+      {
+        "file": "engine-c1d6b7ae4beb.wasm",
+        "gzip": "engine-c1d6b7ae4beb.wasm.gz",
+        "size": 26078984,
+        "compressedSize": 6025983,
+        "sha256": "a05e9fbf5f128fc240ae90426c033b326aebe39a1772bd6e161bdf9bbbb20ffd",
+        "type": "application/wasm"
+      },
+      {
+        "file": "game-7078d09457f7.pck",
+        "gzip": "game-7078d09457f7.pck.gz",
+        "size": 1772664,
+        "compressedSize": 1667111,
+        "sha256": "7078d09457f7477b4e8a39ffa537fe217277e571756a097869e0c35ffe97e773",
+        "type": "application/octet-stream"
+      }
+    ],
+    "compressed_bytes": 7693094
   }
 }

@@ -1,236 +1,84 @@
 <!DOCTYPE html>
 <html lang="ru">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>FROG ROAD × PREACHER SAY AMEN</title>
-		<style>
-html, body, #canvas {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
-
-html, body { width: 100%; height: 100%; min-height: 100dvh; }
-
-body {
-	color: white;
-	background-color: #172c23;
- overscroll-behavior: none;
-	overflow: hidden;
-	touch-action: none;
-}
-
-#canvas {
-	position: fixed;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	display: block;
-}
-
-#canvas:focus {
-	outline: none;
-}
-
-#status, #status-splash, #status-progress {
-	position: absolute;
-	left: 0;
-	right: 0;
-}
-
-#status, #status-splash {
-	top: 0;
-	bottom: 0;
-}
-
-#status {
-	background-color: #172c23;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	visibility: hidden;
-}
-
-#status-splash {
-	max-height: 100%;
-	max-width: 100%;
-	margin: auto;
-}
-
-#status-splash.show-image--false {
-	display: none;
-}
-
-#status-splash.fullsize--true {
-	height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-#status-splash.use-filter--false {
-	image-rendering: pixelated;
-}
-
-#status-progress, #status-notice {
-	display: none;
-}
-
-#status-progress {
-	accent-color: #dca04a;
-	bottom: 24%;
-	width: 50%;
-	margin: 0 auto;
-}
-
-#status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
-	margin: 0 2rem;
-	overflow: hidden;
-	padding: 1rem;
-	text-align: center;
-	z-index: 1;
-}
-		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
-<meta name="description" content="Пиксельная аркада PREACHER SAY AMEN на весь экран. Тап — прыжок вперёд, свайп — смена направления.">
-<meta name="theme-color" content="#172c23"><meta name="apple-mobile-web-app-capable" content="yes">
-	</head>
-	<body>
-		<canvas id="canvas">
-			Your browser does not support the canvas tag.
-		</canvas>
-
-		<noscript>
-			Your browser does not support JavaScript.
-		</noscript>
-
-		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--false use-filter--false" src="loading.png" alt="">
-			<progress id="status-progress"></progress>
-			<div id="status-notice"></div>
-		</div>
-
-		<script src="engine-5d320febc6df.js"></script>
-		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"engine-5d320febc6df","experimentalVK":false,"fileSizes":{"engine-5d320febc6df.wasm":37695054,"game-b0273811c475.pck":1772232},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"mainPack":"game-b0273811c475.pck"};
-const GODOT_THREADS_ENABLED = false;
-const engine = new Engine(GODOT_CONFIG);
-
-(function () {
-	const statusOverlay = document.getElementById('status');
-	const statusProgress = document.getElementById('status-progress');
-	const statusNotice = document.getElementById('status-notice');
-
-	let initializing = true;
-	let statusMode = '';
-
-	function setStatusMode(mode) {
-		if (statusMode === mode || !initializing) {
-			return;
-		}
-		if (mode === 'hidden') {
-			statusOverlay.remove();
-			initializing = false;
-			return;
-		}
-		statusOverlay.style.visibility = 'visible';
-		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
-		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
-		statusMode = mode;
-	}
-
-	function setStatusNotice(text) {
-		while (statusNotice.lastChild) {
-			statusNotice.removeChild(statusNotice.lastChild);
-		}
-		const lines = text.split('\n');
-		lines.forEach((line) => {
-			statusNotice.appendChild(document.createTextNode(line));
-			statusNotice.appendChild(document.createElement('br'));
-		});
-	}
-
-	function displayFailureNotice(err) {
-		console.error(err);
-		if (err instanceof Error) {
-			setStatusNotice(err.message);
-		} else if (typeof err === 'string') {
-			setStatusNotice(err);
-		} else {
-			setStatusNotice('Не удалось загрузить игру. Обновите страницу.');
-		}
-		setStatusMode('notice');
-		initializing = false;
-	}
-
-	const missing = Engine.getMissingFeatures({
-		threads: GODOT_THREADS_ENABLED,
-	});
-
-	if (missing.length !== 0) {
-		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
-			let serviceWorkerRegistrationPromise;
-			try {
-				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
-			} catch (err) {
-				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
-			}
-			// There's a chance that installing the service worker would fix the issue
-			Promise.race([
-				serviceWorkerRegistrationPromise.then((registration) => {
-					if (registration != null) {
-						return Promise.reject(new Error('Service worker already exists.'));
-					}
-					return registration;
-				}).then(() => engine.installServiceWorker()),
-				// For some reason, `getRegistration()` can stall
-				new Promise((resolve) => {
-					setTimeout(() => resolve(), 2000);
-				}),
-			]).then(() => {
-				// Reload if there was no error.
-				window.location.reload();
-			}).catch((err) => {
-				console.error('Error while registering service worker:', err);
-			});
-		} else {
-			// Display the message as usual
-			const missingMsg = 'Откройте игру в свежем Chrome, Safari или Firefox. Не хватает поддержки:\n';
-			displayFailureNotice(missingMsg + missing.join('\n'));
-		}
-	} else {
-		setStatusMode('progress');
-		engine.startGame({
-			'onProgress': function (current, total) {
-				if (current > 0 && total > 0) {
-					statusProgress.value = current;
-					statusProgress.max = total;
-				} else {
-					statusProgress.removeAttribute('value');
-					statusProgress.removeAttribute('max');
-				}
-			},
-		}).then(() => {
-			setStatusMode('hidden');
-		}, displayFailureNotice);
-	}
-}());
-		</script>
-	<script>
-document.getElementById('canvas').addEventListener('pointerup', function () {
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-        document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch(function () {});
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#172c23">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="FROG ROAD × PREACHER SAY AMEN. Тап — прыжок вперёд, свайп — смена направления.">
+  <title>FROG ROAD × PREACHER SAY AMEN</title>
+  <link rel="icon" href="index.icon.png" type="image/png">
+  <style>
+    * {box-sizing: border-box}
+    html, body {margin: 0; width: 100%; height: 100%; min-height: 100dvh; overflow: hidden; background: #172c23; color: #f6e7bc; overscroll-behavior: none; touch-action: none}
+    #canvas {position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none}
+    #status {position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #172c23; font: 15px/1.5 system-ui, sans-serif; text-align: center; gap: 14px}
+    #status[hidden] {display: none}
+    #poster {width: min(360px, 85vw, 56vh); height: auto; image-rendering: pixelated}
+    #status-progress {width: min(290px, 80vw); height: 12px; accent-color: #dca04a; border: 0}
+    #status-text {margin: 0; min-height: 24px; max-width: 360px; font-variant-numeric: tabular-nums}
+    #status-hint {margin: 0; max-width: 360px; color: #bac3a8; font-size: 12px}
+    #retry {border: 2px solid #80551d; border-radius: 5px; background: #dca04a; color: #231a0b; padding: 12px 22px; font: bold 15px system-ui; cursor: pointer; touch-action: manipulation}
+  </style>
+</head>
+<body>
+  <canvas id="canvas" tabindex="0">Для игры нужен браузер с поддержкой WebGL 2.</canvas>
+  <div id="status" role="status" aria-live="polite">
+    <img id="poster" src="loading.png" width="360" height="270" alt="FROG ROAD — PREACHER SAY AMEN">
+    <progress id="status-progress" max="100" value="0" aria-label="Загрузка игры"></progress>
+    <p id="status-text">Готовим дорогу…</p>
+    <p id="status-hint">Тап — прыжок вперёд. Свайп — смена направления.</p>
+    <button id="retry" hidden>Попробовать ещё раз</button>
+    <noscript>Включите JavaScript, чтобы запустить игру.</noscript>
+  </div>
+  <script src="delivery-f8e74d8770c3.js"></script>
+  <script src="engine-c1d6b7ae4beb.js"></script>
+  <script>
+    const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"engine-c1d6b7ae4beb","experimentalVK":false,"fileSizes":{"engine-c1d6b7ae4beb.wasm":26078984,"game-7078d09457f7.pck":1772664},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"mainPack":"game-7078d09457f7.pck"};
+    const DELIVERY_ASSETS = [{"file":"engine-c1d6b7ae4beb.wasm","gzip":"engine-c1d6b7ae4beb.wasm.gz","size":26078984,"compressedSize":6025983,"sha256":"a05e9fbf5f128fc240ae90426c033b326aebe39a1772bd6e161bdf9bbbb20ffd","type":"application/wasm"},{"file":"game-7078d09457f7.pck","gzip":"game-7078d09457f7.pck.gz","size":1772664,"compressedSize":1667111,"sha256":"7078d09457f7477b4e8a39ffa537fe217277e571756a097869e0c35ffe97e773","type":"application/octet-stream"}];
+    const statusOverlay = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
+    const statusProgress = document.getElementById('status-progress');
+    const retryButton = document.getElementById('retry');
+    retryButton.addEventListener('click', () => location.reload());
+    async function start() {
+      try {
+        if (typeof Engine === 'undefined' || !globalThis.FrogRoadDelivery) throw new Error('Loader unavailable');
+        const missing = Engine.getMissingFeatures({threads: false});
+        if (missing.length) {
+          statusText.textContent = 'Откройте игру в свежем Chrome, Safari или Firefox.';
+          document.getElementById('status-hint').textContent = 'Нужна поддержка: ' + missing.join(', ');
+          statusProgress.hidden = true;
+          return;
+        }
+        await FrogRoadDelivery.prepare(DELIVERY_ASSETS, (current, total) => {
+          const percent = Math.min(100, Math.round(current / total * 100));
+          statusProgress.value = percent * 0.9;
+          statusText.textContent = 'Загружаем игру · ' + percent + '%';
+        });
+        statusProgress.value = 90;
+        statusText.textContent = 'Запускаем игру…';
+        const engine = new Engine(GODOT_CONFIG);
+        await engine.startGame();
+        statusOverlay.hidden = true;
+        document.documentElement.dataset.gameReady = 'true';
+        document.documentElement.dataset.delivery = JSON.stringify({
+          ...FrogRoadDelivery.snapshot(), readyMs: Math.round(performance.now())
+        });
+        FrogRoadDelivery.prune();
+      } catch (error) {
+        console.error('FROG ROAD startup failed', error);
+        statusText.textContent = 'Не удалось загрузить игру. Проверьте соединение и попробуйте ещё раз.';
+        statusProgress.hidden = true;
+        retryButton.hidden = false;
+      }
     }
-}, {once: true});
-</script>
+    document.getElementById('canvas').addEventListener('pointerup', function () {
+      if (document.fullscreenEnabled && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch(() => {});
+      }
+    }, {once: true});
+    start();
+  </script>
 </body>
 </html>
-
